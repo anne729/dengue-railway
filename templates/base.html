@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Dengue Railway{% endblock %} — Dengue Railway</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fraunces:ital,wght@0,700;1,400&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --g900:#0f3d1e; --g800:#1a5c2e; --g700:#246b38; --g600:#2e8047;
+      --g500:#3a9e59; --g400:#5cba78; --g300:#8fd4a5; --g100:#d6f0df; --g50:#eef9f1;
+      --amber:#e8a020; --red:#d63b3b; --red-light:#fff0f0; --red-border:#f5c5c5;
+      --bg:#f5faf6; --surface:#fff; --text1:#0d2416; --text2:#3a5444; --text3:#7a9e88;
+      --border:#c8e6d0; --shadow:0 2px 16px rgba(15,61,30,.10);
+      --r-sm:8px; --r-md:12px; --r-lg:18px; --r-xl:24px;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:var(--text1); min-height:100vh; }
+
+    /* NAV */
+    nav {
+      position:sticky; top:0; z-index:1000;
+      background:var(--g900); height:60px;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 32px; border-bottom:1px solid var(--g800);
+    }
+    .logo { font-family:'Fraunces',serif; font-size:20px; font-weight:700; color:#fff; text-decoration:none; letter-spacing:-.3px; }
+    .logo span { color:var(--g400); }
+    .nav-links { display:flex; align-items:center; gap:4px; }
+    .nav-links a {
+      color:rgba(255,255,255,.7); text-decoration:none; font-size:13px; font-weight:600;
+      padding:7px 14px; border-radius:var(--r-sm); transition:all .2s; letter-spacing:.2px;
+    }
+    .nav-links a:hover { color:#fff; background:rgba(255,255,255,.1); }
+    .nav-links a.active { color:#fff; background:var(--g700); }
+    .nav-badge {
+      font-size:11px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;
+      background:var(--g700); color:var(--g100); padding:4px 10px; border-radius:20px;
+    }
+
+    /* MAIN CONTENT WRAPPER */
+    main { max-width:1100px; margin:0 auto; padding:48px 24px 80px; }
+    main.full-width { max-width:100%; padding:0; }
+
+    /* PAGE HEADER */
+    .page-header { margin-bottom:40px; }
+    .page-header h1 { font-family:'Fraunces',serif; font-size:36px; font-weight:700; color:var(--text1); line-height:1.15; margin-bottom:8px; }
+    .page-header p { font-size:16px; color:var(--text2); line-height:1.7; max-width:600px; }
+    .page-header .source-tag {
+      display:inline-flex; align-items:center; gap:6px;
+      margin-top:12px; font-size:11px; font-weight:700; letter-spacing:.5px;
+      text-transform:uppercase; color:var(--g700);
+      background:var(--g50); border:1px solid var(--g300);
+      padding:4px 10px; border-radius:20px;
+    }
+
+    /* SECTION TITLE */
+    .section-title { font-family:'Fraunces',serif; font-size:22px; font-weight:700; color:var(--text1); margin-bottom:6px; }
+    .section-sub { font-size:14px; color:var(--text2); margin-bottom:24px; line-height:1.6; }
+
+    /* CARD */
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); padding:28px; }
+
+    /* FOOTER */
+    footer {
+      background:var(--g900); color:rgba(255,255,255,.55); text-align:center;
+      font-size:12px; padding:20px 24px; line-height:1.7;
+    }
+    footer strong { color:rgba(255,255,255,.85); }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width:5px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="/">Dengue <span>Railway</span></a>
+  <div class="nav-links">
+    <a href="/" {% if active == 'home' %}class="active"{% endif %}>Beranda</a>
+    <a href="/statistik" {% if active == 'statistik' %}class="active"{% endif %}>Statistik</a>
+    <a href="/edukasi" {% if active == 'edukasi' %}class="active"{% endif %}>Edukasi</a>
+    <a href="/peta" {% if active == 'peta' %}class="active"{% endif %}>Peta & Lapor</a>
+  </div>
+  <div class="nav-badge">Kab/Kota Bogor</div>
+</nav>
+
+{% block content %}{% endblock %}
+
+<footer>
+  <strong>Dengue Railway</strong> — Sistem Pemantauan & Pelaporan DBD Kab/Kota Bogor<br/>
+  Data bersumber dari Kementerian Kesehatan RI & jurnal epidemiologi. Bukan pengganti diagnosis medis.
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,416 @@
+{% extends "base.html" %}
+{% set active = 'peta' %}
+{% block title %}Peta & Laporan{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  /* Override main padding for this page */
+  body { overflow:hidden; }
+
+  .peta-layout {
+    display:grid;
+    grid-template-columns:360px 1fr;
+    height: calc(100vh - 60px);
+  }
+
+  /* PANEL KIRI */
+  .panel {
+    background:var(--surface);
+    border-right:1px solid var(--border);
+    display:flex; flex-direction:column;
+    overflow:hidden;
+  }
+  .panel-tabs {
+    display:grid; grid-template-columns:1fr 1fr;
+    border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .tab-btn {
+    padding:14px 8px; font-size:13px; font-weight:600;
+    background:none; border:none; cursor:pointer;
+    color:var(--text3); border-bottom:2px solid transparent;
+    font-family:'Plus Jakarta Sans',sans-serif; transition:all .2s;
+  }
+  .tab-btn.active { color:var(--g700); border-bottom-color:var(--g600); background:var(--g50); }
+
+  .tab-pane { display:none; flex:1; overflow-y:auto; padding:20px; flex-direction:column; gap:16px; }
+  .tab-pane.active { display:flex; }
+  .tab-pane::-webkit-scrollbar { width:4px; }
+  .tab-pane::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+
+  /* STAT CARDS */
+  .mini-stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .mini-stat {
+    background:var(--g50); border:1px solid var(--border);
+    border-radius:var(--r-md); padding:14px 12px;
+  }
+  .mini-stat.red  { background:#fff5f5; border-color:var(--red-border); }
+  .mini-stat.amber{ background:#fffbf0; border-color:#f5e0a0; }
+  .ms-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--text3); margin-bottom:4px; }
+  .ms-num   { font-size:24px; font-weight:700; color:var(--text1); line-height:1; }
+  .ms-num.red { color:var(--red); }
+  .ms-num.amber { color:var(--amber); }
+  .ms-sub   { font-size:11px; color:var(--text3); margin-top:2px; }
+
+  .sec-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--text3); margin-bottom:8px; }
+  .kel-list { display:flex; flex-direction:column; gap:6px; }
+  .kel-item {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 12px; background:var(--g50);
+    border:1px solid var(--border); border-radius:var(--r-sm); font-size:13px;
+  }
+  .kel-name { font-weight:500; }
+  .kel-badge {
+    font-size:11px; font-weight:700; background:var(--g700); color:#fff;
+    padding:2px 8px; border-radius:20px;
+  }
+  .kel-badge.high { background:var(--red); }
+  .kel-badge.med  { background:var(--amber); color:var(--text1); }
+
+  /* FORM */
+  .f-group { display:flex; flex-direction:column; gap:6px; }
+  .f-group label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--text2); }
+  .f-group input, .f-group textarea, .f-group select {
+    padding:10px 12px; border:1px solid var(--border); border-radius:var(--r-sm);
+    font-size:14px; font-family:'Plus Jakarta Sans',sans-serif;
+    background:var(--g50); color:var(--text1); outline:none; resize:vertical;
+    transition:border-color .2s;
+  }
+  .f-group input:focus, .f-group textarea:focus { border-color:var(--g500); background:#fff; }
+  .coord-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .loc-btn {
+    display:flex; align-items:center; gap:6px;
+    padding:9px 14px; border:1px dashed var(--g500); border-radius:var(--r-sm);
+    background:var(--g50); color:var(--g700); font-size:13px; font-weight:600;
+    cursor:pointer; transition:all .2s; font-family:'Plus Jakarta Sans',sans-serif;
+  }
+  .loc-btn:hover { background:var(--g100); }
+  .hint { font-size:11px; color:var(--text3); }
+
+  .photo-area {
+    border:1.5px dashed var(--border); border-radius:var(--r-sm);
+    padding:20px; text-align:center; cursor:pointer;
+    background:var(--g50); transition:all .2s;
+  }
+  .photo-area:hover { border-color:var(--g500); background:var(--g100); }
+  .photo-area input { display:none; }
+  .photo-icon { font-size:22px; margin-bottom:6px; }
+  .photo-area p { font-size:12px; color:var(--text3); margin:0; }
+  .photo-preview { max-width:100%; border-radius:var(--r-sm); margin-top:10px; display:none; }
+
+  .submit-btn {
+    padding:13px; background:var(--g700); color:#fff;
+    border:none; border-radius:var(--r-md); font-size:14px; font-weight:700;
+    cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; transition:background .2s;
+  }
+  .submit-btn:hover { background:var(--g800); }
+  .submit-btn:disabled { background:var(--g300); cursor:not-allowed; }
+
+  .toast {
+    display:none; padding:12px 16px; border-radius:var(--r-sm);
+    font-size:13px; font-weight:600; text-align:center;
+  }
+  .toast.success { background:var(--g100); color:var(--g800); border:1px solid var(--g300); }
+  .toast.error   { background:#fff0f0; color:var(--red); border:1px solid var(--red-border); }
+
+  /* MAP AREA */
+  .map-area { position:relative; }
+  #map { width:100%; height:100%; }
+
+  /* FAB */
+  .fab {
+    position:absolute; bottom:28px; right:28px; z-index:999;
+    background:var(--g700); color:#fff;
+    border:none; border-radius:50px;
+    padding:14px 22px; font-size:14px; font-weight:700;
+    font-family:'Plus Jakarta Sans',sans-serif;
+    cursor:pointer; box-shadow:0 4px 16px rgba(15,61,30,.35);
+    transition:all .2s; display:flex; align-items:center; gap:8px;
+  }
+  .fab:hover { background:var(--g800); transform:translateY(-2px); }
+
+  /* POPUP */
+  .leaflet-popup-content-wrapper {
+    border-radius:var(--r-md) !important; box-shadow:var(--shadow) !important;
+    border:1px solid var(--border) !important;
+    font-family:'Plus Jakarta Sans',sans-serif !important;
+  }
+  .popup-kel { font-weight:700; font-size:14px; color:var(--text1); margin-bottom:4px; }
+  .popup-desc { font-size:13px; color:var(--text2); margin-bottom:6px; }
+  .popup-meta { font-size:11px; color:var(--text3); }
+  .popup-img  { width:100%; border-radius:6px; margin-top:8px; max-height:120px; object-fit:cover; }
+
+  @media(max-width:768px) {
+    body { overflow:auto; }
+    .peta-layout { grid-template-columns:1fr; grid-template-rows:auto 400px; height:auto; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="peta-layout">
+
+  <!-- PANEL KIRI -->
+  <aside class="panel">
+    <div class="panel-tabs">
+      <button class="tab-btn active" onclick="switchTab('statistik')">📊 Statistik</button>
+      <button class="tab-btn" onclick="switchTab('lapor')">📝 Laporkan</button>
+    </div>
+
+    <!-- TAB: STATISTIK -->
+    <div class="tab-pane active" id="tab-statistik">
+      <div class="mini-stats">
+        <div class="mini-stat red">
+          <div class="ms-label">Total Laporan</div>
+          <div class="ms-num red" id="ms-total">0</div>
+          <div class="ms-sub">se-Bogor</div>
+        </div>
+        <div class="mini-stat amber">
+          <div class="ms-label">Bulan Ini</div>
+          <div class="ms-num amber" id="ms-month">0</div>
+          <div class="ms-sub" id="ms-month-label">—</div>
+        </div>
+        <div class="mini-stat">
+          <div class="ms-label">Kelurahan</div>
+          <div class="ms-num" id="ms-kel">0</div>
+          <div class="ms-sub">terdampak</div>
+        </div>
+        <div class="mini-stat">
+          <div class="ms-label">Laporan Terbaru</div>
+          <div class="ms-num" style="font-size:14px;padding-top:4px;" id="ms-latest">—</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="sec-label">Hotspot Kelurahan</div>
+        <div class="kel-list" id="kel-list">
+          <div style="font-size:13px;color:var(--text3);text-align:center;padding:20px 0;">Belum ada laporan masuk</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: FORM LAPOR -->
+    <div class="tab-pane" id="tab-lapor">
+      <div class="f-group">
+        <label>Kelurahan / Desa</label>
+        <input type="text" id="f-kel" placeholder="Cth: Cibinong, Bojong Gede..."/>
+      </div>
+      <div class="f-group">
+        <label>Koordinat Lokasi</label>
+        <button class="loc-btn" onclick="getMyLocation()">📍 Gunakan Lokasi Saya</button>
+        <div class="coord-row">
+          <input type="number" id="f-lat" placeholder="Latitude" step="any"/>
+          <input type="number" id="f-lng" placeholder="Longitude" step="any"/>
+        </div>
+        <span class="hint">atau klik titik di peta untuk isi otomatis</span>
+      </div>
+      <div class="f-group">
+        <label>Deskripsi</label>
+        <textarea id="f-desc" rows="3" placeholder="Jelaskan indikasi: genangan air, jentik nyamuk, kasus DBD di sekitar, dll."></textarea>
+      </div>
+      <div class="f-group">
+        <label>Foto (opsional)</label>
+        <div class="photo-area" onclick="document.getElementById('f-photo').click()">
+          <input type="file" id="f-photo" accept="image/*" onchange="previewPhoto(event)"/>
+          <div class="photo-icon">📷</div>
+          <p>Tap untuk unggah foto</p>
+          <img class="photo-preview" id="photo-prev"/>
+        </div>
+      </div>
+      <button class="submit-btn" id="submit-btn" onclick="submitReport()">Kirim Laporan</button>
+      <div class="toast" id="toast"></div>
+    </div>
+  </aside>
+
+  <!-- MAP -->
+  <div class="map-area">
+    <div id="map"></div>
+    <button class="fab" onclick="switchTab('lapor')">＋ Lapor Sekarang</button>
+  </div>
+
+</div>
+
+<script>
+  // INIT MAP — default Bogor
+  const map = L.map('map').setView([-6.5971, 106.8060], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'© OpenStreetMap contributors', maxZoom:19
+  }).addTo(map);
+
+  const greenIcon = L.divIcon({
+    html:`<div style="width:26px;height:26px;border-radius:50% 50% 50% 0;background:#2e8047;border:2px solid #fff;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.25)"></div>`,
+    className:'', iconSize:[26,26], iconAnchor:[13,26], popupAnchor:[0,-28]
+  });
+
+  // Klik peta → isi koordinat
+  map.on('click', e => {
+    document.getElementById('f-lat').value = e.latlng.lat.toFixed(6);
+    document.getElementById('f-lng').value = e.latlng.lng.toFixed(6);
+    switchTab('lapor');
+  });
+
+  // LOAD DATA
+  let allReports = [];
+
+  async function loadReports() {
+    try {
+      const r = await fetch('/api/reports');
+      allReports = await r.json();
+      renderMarkers();
+      renderStats();
+    } catch(e) { console.error(e); }
+  }
+
+  async function loadStats() {
+    try {
+      const r = await fetch('/api/stats');
+      const stats = await r.json();
+      renderKelList(stats);
+    } catch(e) { console.error(e); }
+  }
+
+  function renderMarkers() {
+    map.eachLayer(l => { if (l instanceof L.Marker) map.removeLayer(l); });
+    allReports.forEach(r => {
+      if (!r.lat || !r.lng) return;
+      const m = L.marker([r.lat, r.lng], { icon: greenIcon }).addTo(map);
+      const tgl = new Date(r.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
+      m.bindPopup(`
+        <div class="popup-kel">📍 ${r.kelurahan||'Tidak diketahui'}</div>
+        <div class="popup-desc">${r.description||'Tidak ada deskripsi'}</div>
+        <div class="popup-meta">🕐 ${tgl}</div>
+        ${r.photo_path ? `<img src="/uploads/${r.photo_path}" class="popup-img"/>` : ''}
+      `);
+    });
+  }
+
+  function renderStats() {
+    const now = new Date();
+    const thisMonth = allReports.filter(r => {
+      const d = new Date(r.created_at);
+      return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+    }).length;
+
+    document.getElementById('ms-total').textContent = allReports.length;
+    document.getElementById('ms-month').textContent = thisMonth;
+    document.getElementById('ms-month-label').textContent = now.toLocaleDateString('id-ID',{month:'long'});
+
+    if (allReports.length > 0) {
+      const d = new Date(allReports[0].created_at);
+      document.getElementById('ms-latest').textContent = d.toLocaleDateString('id-ID',{day:'numeric',month:'short'});
+    }
+  }
+
+  function renderKelList(stats) {
+    document.getElementById('ms-kel').textContent = stats.length;
+    const list = document.getElementById('kel-list');
+    if (!stats.length) {
+      list.innerHTML = `<div style="font-size:13px;color:var(--text3);text-align:center;padding:20px 0;">Belum ada laporan masuk</div>`;
+      return;
+    }
+    const max = stats[0].total;
+    list.innerHTML = stats.map(s => {
+      const pct = s.total / max;
+      const cls = pct > 0.7 ? 'high' : pct > 0.4 ? 'med' : '';
+      return `<div class="kel-item">
+        <span class="kel-name">${s.kelurahan}</span>
+        <span class="kel-badge ${cls}">${s.total}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // GEOLOCATION
+  function getMyLocation() {
+    if (!navigator.geolocation) { alert('Browser tidak mendukung GPS'); return; }
+    navigator.geolocation.getCurrentPosition(pos => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      document.getElementById('f-lat').value = lat.toFixed(6);
+      document.getElementById('f-lng').value = lng.toFixed(6);
+      map.setView([lat, lng], 15);
+    }, () => alert('Gagal mendapatkan lokasi. Pastikan izin GPS aktif.'));
+  }
+
+  // PHOTO PREVIEW
+  function previewPhoto(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = document.getElementById('photo-prev');
+      img.src = ev.target.result;
+      img.style.display = 'block';
+      document.querySelector('.photo-area p').style.display = 'none';
+      document.querySelector('.photo-icon').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // SUBMIT
+  async function submitReport() {
+    const lat = document.getElementById('f-lat').value;
+    const lng = document.getElementById('f-lng').value;
+    const kel = document.getElementById('f-kel').value;
+
+    if (!lat || !lng) { showToast('Isi koordinat dulu atau klik titik di peta.', 'error'); return; }
+    if (!kel) { showToast('Masukkan nama kelurahan/desa.', 'error'); return; }
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true; btn.textContent = 'Mengirim...';
+
+    const fd = new FormData();
+    fd.append('lat', lat);
+    fd.append('lng', lng);
+    fd.append('description', document.getElementById('f-desc').value);
+    fd.append('kelurahan', kel);
+    const photo = document.getElementById('f-photo').files[0];
+    if (photo) fd.append('photo', photo);
+
+    try {
+      const res = await fetch('/api/report', { method:'POST', body:fd });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        showToast('✅ Laporan berhasil dikirim!', 'success');
+        resetForm();
+        loadReports();
+        loadStats();
+      } else {
+        showToast('Terjadi kesalahan. Coba lagi.', 'error');
+      }
+    } catch(e) {
+      showToast('Gagal terhubung ke server.', 'error');
+    }
+    btn.disabled = false; btn.textContent = 'Kirim Laporan';
+  }
+
+  function resetForm() {
+    ['f-kel','f-lat','f-lng','f-desc'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-photo').value = '';
+    const img = document.getElementById('photo-prev');
+    img.style.display = 'none';
+    document.querySelector('.photo-area p').style.display = '';
+    document.querySelector('.photo-icon').style.display = '';
+  }
+
+  function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = `toast ${type}`;
+    t.style.display = 'block';
+    setTimeout(() => { t.style.display = 'none'; }, 4000);
+  }
+
+  // TABS
+  function switchTab(name) {
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+      b.classList.toggle('active', (i===0 && name==='statistik') || (i===1 && name==='lapor'));
+    });
+    document.getElementById('tab-statistik').classList.toggle('active', name==='statistik');
+    document.getElementById('tab-lapor').classList.toggle('active', name==='lapor');
+  }
+
+  // INIT
+  loadReports();
+  loadStats();
+  setInterval(() => { loadReports(); loadStats(); }, 30000);
+</script>
+{% endblock %}

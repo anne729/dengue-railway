@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% set active = 'home' %}
+{% block title %}Beranda{% endblock %}
+
+{% block head %}
+<style>
+  .hero {
+    background:var(--g900); color:#fff;
+    padding:72px 32px 64px; text-align:center;
+    border-bottom:1px solid var(--g800);
+  }
+  .hero-eyebrow {
+    display:inline-block; font-size:11px; font-weight:700; letter-spacing:1.2px;
+    text-transform:uppercase; color:var(--g400);
+    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);
+    padding:5px 14px; border-radius:20px; margin-bottom:20px;
+  }
+  .hero h1 {
+    font-family:'Fraunces',serif; font-size:48px; font-weight:700;
+    line-height:1.1; margin-bottom:16px; max-width:700px; margin-inline:auto;
+  }
+  .hero h1 em { font-style:italic; color:var(--g400); }
+  .hero p { font-size:17px; color:rgba(255,255,255,.7); max-width:520px; margin-inline:auto; line-height:1.7; }
+  .hero-cta { display:flex; gap:12px; justify-content:center; margin-top:32px; flex-wrap:wrap; }
+  .btn-primary {
+    padding:12px 24px; background:var(--g500); color:#fff;
+    border:none; border-radius:var(--r-md); font-size:14px; font-weight:700;
+    cursor:pointer; text-decoration:none; transition:background .2s;
+  }
+  .btn-primary:hover { background:var(--g600); }
+  .btn-outline {
+    padding:12px 24px; background:transparent; color:#fff;
+    border:1px solid rgba(255,255,255,.3); border-radius:var(--r-md);
+    font-size:14px; font-weight:700; text-decoration:none; transition:all .2s;
+  }
+  .btn-outline:hover { background:rgba(255,255,255,.08); }
+
+  .home-main { max-width:1100px; margin:0 auto; padding:48px 24px 80px; }
+
+  .quick-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:48px; }
+  .qs-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--r-lg); padding:24px 20px;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .qs-icon { font-size:22px; margin-bottom:4px; }
+  .qs-num { font-size:32px; font-weight:700; color:var(--text1); line-height:1; }
+  .qs-num.red { color:var(--red); }
+  .qs-num.amber { color:var(--amber); }
+  .qs-label { font-size:13px; color:var(--text2); font-weight:500; }
+  .qs-sub { font-size:11px; color:var(--text3); }
+
+  .feature-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+  .feature-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--r-lg); padding:28px 24px; text-decoration:none;
+    color:inherit; transition:all .2s; display:block;
+  }
+  .feature-card:hover { border-color:var(--g400); box-shadow:var(--shadow); transform:translateY(-2px); }
+  .feature-icon {
+    width:44px; height:44px; border-radius:var(--r-md);
+    background:var(--g50); border:1px solid var(--g300);
+    display:flex; align-items:center; justify-content:center;
+    font-size:20px; margin-bottom:14px;
+  }
+  .feature-card h3 { font-size:16px; font-weight:700; margin-bottom:6px; color:var(--text1); }
+  .feature-card p { font-size:13px; color:var(--text2); line-height:1.6; }
+  .feature-arrow { margin-top:16px; font-size:13px; color:var(--g600); font-weight:600; }
+
+  @media(max-width:768px) {
+    .hero h1 { font-size:32px; }
+    .quick-stats, .feature-grid { grid-template-columns:1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero">
+  <div class="hero-eyebrow">Sistem Pemantauan DBD — Bogor</div>
+  <h1>Bersama lawan <em>demam berdarah</em> di Bogor</h1>
+  <p>Platform pelaporan, edukasi, dan pemantauan penyebaran Demam Berdarah Dengue berbasis komunitas untuk wilayah Kab/Kota Bogor.</p>
+  <div class="hero-cta">
+    <a href="/peta" class="btn-primary">📍 Laporkan Sekarang</a>
+    <a href="/statistik" class="btn-outline">Lihat Data Statistik</a>
+  </div>
+</div>
+
+<div class="home-main">
+  <!-- Quick stats -->
+  <div class="quick-stats">
+    <div class="qs-card">
+      <div class="qs-icon">🦟</div>
+      <div class="qs-num red">114.665</div>
+      <div class="qs-label">Kasus DBD di Indonesia</div>
+      <div class="qs-sub">Tahun 2023 — Sumber: Kemenkes RI</div>
+    </div>
+    <div class="qs-card">
+      <div class="qs-icon">⚠️</div>
+      <div class="qs-num amber">894</div>
+      <div class="qs-label">Kematian Akibat DBD</div>
+      <div class="qs-sub">Tahun 2023 — CFR 0,78%</div>
+    </div>
+    <div class="qs-card">
+      <div class="qs-icon">📍</div>
+      <div class="qs-num" id="home-laporan">—</div>
+      <div class="qs-label">Laporan Masuk di Bogor</div>
+      <div class="qs-sub">Data komunitas realtime</div>
+    </div>
+  </div>
+
+  <!-- Feature nav -->
+  <div class="section-title" style="margin-bottom:6px;">Jelajahi Platform</div>
+  <p class="section-sub">Tiga fitur utama untuk membantu pencegahan DBD di sekitar kamu.</p>
+  <div class="feature-grid">
+    <a href="/statistik" class="feature-card">
+      <div class="feature-icon">📊</div>
+      <h3>Statistik & Data</h3>
+      <p>Grafik kasus DBD per tahun dan per provinsi dari data resmi Kemenkes RI.</p>
+      <div class="feature-arrow">Lihat data →</div>
+    </a>
+    <a href="/edukasi" class="feature-card">
+      <div class="feature-icon">📚</div>
+      <h3>Edukasi DBD</h3>
+      <p>Pengertian, gejala, cara penularan, dan langkah pencegahan berbasis jurnal ilmiah.</p>
+      <div class="feature-arrow">Baca selengkapnya →</div>
+    </a>
+    <a href="/peta" class="feature-card">
+      <div class="feature-icon">🗺️</div>
+      <h3>Peta & Laporan</h3>
+      <p>Lihat sebaran laporan warga dan laporkan indikasi jentik atau genangan air di sekitar kamu.</p>
+      <div class="feature-arrow">Buka peta →</div>
+    </a>
+  </div>
+</div>
+
+<script>
+  fetch('/api/reports').then(r=>r.json()).then(data=>{
+    document.getElementById('home-laporan').textContent = data.length;
+  }).catch(()=>{
+    document.getElementById('home-laporan').textContent = '0';
+  });
+</script>
+{% endblock %}
